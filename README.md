@@ -10,6 +10,19 @@ This script is based and tested on a Fedora host (other distro may also work) an
 
         $ sudo dnf install libvirt guestfs-tools, libvirt-nss
 
+1. Enabled `libvirt` NSS module to allow connecting to VMs using the hostname or libivirt domain name
+    1. Check current `authselect` profile and the enabled features (see also `/etc/authselect/authselect.conf`)
+
+            $ sudo authselect current
+            Profile ID: sssd
+            Enabled features:
+            - with-silent-lastlog
+            - with-fingerprint
+
+    1. Update the `authselect` profile using the already configured features and include `with-libvirt`
+
+            $ sudo authselect select sssd with-silent-lastlog with-fingerprint with-libvirt
+
 1. Access to run `virsh` as a regular user using Polkit (see also https://gist.github.com/rvduu/4a07faa1cb1c507b0ef7e16580bc239d)
 1. Red Hat Enterprise Linux installation DVD iso's for the templates, downloaded from http://access.redhat.com to `/var/lib/libvirt/images`
 1. A Working Activation key (Create one at https://console.redhat.com/insights/connector/activation-keys)
