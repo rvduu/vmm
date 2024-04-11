@@ -77,11 +77,7 @@ See `vmm help` for all available options.
 
 ## Accessing a VM
 
-The base images and cloned images are created using the `default` network in `libvirt`. This network is by default a NATted network. By using the libvirt-nss, the Name Service Switch will ustilize the DHCP leasse info to quicky access the VM using its IP number. To configure the Name Service Switch, add the `libvirt` oprion to the `hosts` entry in `/etc/nssswitch.conf`. For example:
-
-    hosts:      files myhostname libvirt resolve [!UNAVAIL=return] dns
-
-VMs in the default network can now be found using the `gethostbyname`.
+The base images and cloned images are created using the `default` network in `libvirt`. This network is by default a NATted network. By using `libvirt-nss`, the Name Service Switch will ustilize the DHCP lease info to resolve the VMs IP number when using `gethostbyname(3)`. See the 'Requirements' section on how to enable `libvirt-nss`.
 
 This default network is often used for testing purposed and to avoid filling up `SHOME/.ssh/known_hosts` with short host keys of short lived VMs, it could be helpful to disable StrictHostKey checking (warning: this can be insecure). The `vmm` script has one extra command to easily connect to the VM using `ssh` and will disable this StrictHostKey checking by adding the folloing options to the `ssh` command line:
 
