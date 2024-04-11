@@ -89,7 +89,7 @@ For example, to connect to a VM:
 
 ## Customization by setting default values for variables
 
-All variables in the top section of the script (inclusing the Kickstart templates) can be overriden by stroring them in `$HOME/.vvm.conf`. Because it can contain activation keys or login information, this file should not be readable ny others (`chmod 0600 $HOME/.vmm.conf).
+All variables in the top section of the script (inclusing the Kickstart templates) can be overriden by stroring them in `$HOME/.vvm.conf`. Because it can contain activation keys or login information, this file should not be readable by others (`chmod 0600 $HOME/.vmm.conf`).
 
 It is also possible to use a custom kickstart template. Dump the default kickstart template with:
 
