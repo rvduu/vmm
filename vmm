@@ -161,9 +161,9 @@ help() {
 	    -n		Specify the base image name (default "rhel{x.y}base")
 	    -s		Specify disk size in Gb (default 10Gb)
 	    -t		Filename of the kickstart template to use instead of the build in default
-			(i.e. for debugging purposes)
+	    		(i.e. for debugging purposes)
 	    -v		Specify the OS Variant for the virt-install "--os-variant" option. See the "virt-install --osinfo list" command
-			for a list of accepted variants or "osinfo-query os" for even more output.
+	    		for a list of accepted variants or "osinfo-query os" for even more output.
 	    version	RHEL Version of the base image to create. I.e.: 9.3
 
 
@@ -176,8 +176,8 @@ help() {
 	    -m		Memory for the new clone in Gb (default 4Gb)
 	    -n		Specify the base image name to clone from (default "rhel{x.y}base")
 	    -R		Specify if the cloned disk needs to be resized. This parameter is passed directly
-			to qemu-img (see man 1 qemu-img). The cloud-init will take care of resizing the partition
-                        and filesystem inside of the VM.
+	    		to qemu-img (see man 1 qemu-img). The cloud-init will take care of resizing the partition
+	    		and filesystem inside of the VM.
 	    -r		Register the VM after cloning (using username + password or activation key and org-id) (mutually exclusieve with -i)
 	    -u		Username to login to the Red Hat Customer Portal for registring the VM
 	    -p		Password to login to the Red Hat Customer Portal for registring the VM
@@ -186,7 +186,7 @@ help() {
 	    -S		Set the system name during registration (default <actkey>-<vmname> | <username>-<vmname>)
 	    -U		Run "yum -y update" after registering the VM
 	    -v		Specify the OS Variant for the virt-install "--os-variant" option. See the "virt-install --osinfo list" command
-			for a list of accepted variants or "osinfo-query os" for even more output.
+	    		for a list of accepted variants or "osinfo-query os" for even more output.
 	    version	RHEL Version for the new vm. I.e.: 9.3
 	                Will be used for libvirt's "--os-variant' option but also for the base image to clone from if -n is not specified
 	    name	Name of the new VM
