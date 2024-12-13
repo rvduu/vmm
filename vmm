@@ -8,6 +8,7 @@ VCPUS="2"
 KSTEMPLATE=""
 ISO=""
 BASENAME=""
+VARIANT=""
 SSHPARAM="-l admin"
 DISKSIZE="10"
 DISKRESIZE=""
@@ -118,7 +119,11 @@ rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 help() {
 	ME=$(/usr/bin/basename $0)
 	/usr/bin/cat <<- EOF
-	$ME {help | dumpks | createbase | clone | connect} (-m mem) (-c vcpus) (-t template) (-n baseimagename) {version} {name}
+	$ME dumpks version
+	$ME createbase [-n baseimagename] [-s size] [-t template] [-v variant] version
+	$ME clone [-c vcpus] [-d domain] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
+	$ME connect [ssh_option] ssh_connection_string
+	
 
 	COMMANDS:
 	    dumpks | dk		Display the kickstart template rather then creating a new base image
@@ -128,30 +133,33 @@ help() {
 
 
 	Dump KS template options:
-	$ME dumpks {version}
+	$ME dumpks version
 
 
 	Create base options:
-	$ME createbase {-t template} {-n baseimagename} {-s size} {version}
+	$ME createbase [-n baseimagename] [-s size] [-t template] [-v variant] version
 
-	    -t		Filename of the kickstart template to use instead of the build in default
-			(i.e. for debugging purposes)
+
 	    -n		Specify the base image name (default "rhel{x.y}base")
 	    -s		Specify disk size in Gb (default 10Gb)
+	    -t		Filename of the kickstart template to use instead of the build in default
+			(i.e. for debugging purposes)
+	    -v		Specify the OS Variant for the virt-install "--os-variant" option. See the "virt-install --osinfo list" command
+			for a list of accepted variants or "osinfo-query os" for even more output.
 	    version	RHEL Version of the base image to create. I.e.: 9.3
 
 
 	Clone options
-	$ME clone {-m mem} {-c vcpus} {-R [+]disksize} {-n baseimagename} {-d domain} {-r} {-u user -p passwd | -a actkey -o orgid} {-S systemname} -U {version} {name}
+	$ME clone [-c vcpus] [-d domain] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
 
-	    -m		Memory for the new clone in Gb (default 4Gb)
 	    -c		Number of vCPUs for the new clone VM (default 2 vCPUs)
+	    -d		Domain name to use in cloud-init for setting the FQDN in the cloned VM
+	    -i		Insert the RHEL Installation ISO as a CDROM and configure /etc/yum.repos.d (mutually exclusieve with -r)
+	    -m		Memory for the new clone in Gb (default 4Gb)
+	    -n		Specify the base image name to clone from (default "rhel{x.y}base")
 	    -R		Specify if the cloned disk needs to be resized. This parameter is passed directly
 			to qemu-img (see man 1 qemu-img). The cloud-init will take care of resizing the partition
                         and filesystem inside of the VM.
-	    -n		Specify the base image name to clone from (default "rhel{x.y}base")
-	    -d		Domain name to use in cloud-init for setting the FQDN in the cloned VM
-	    -i		Insert the RHEL Installation ISO as a CDROM and configure /etc/yum.repos.d (mutually exclusieve with -r)
 	    -r		Register the VM after cloning (using username + password or activation key and org-id) (mutually exclusieve with -i)
 	    -u		Username to login to the Red Hat Customer Portal for registring the VM
 	    -p		Password to login to the Red Hat Customer Portal for registring the VM
@@ -159,13 +167,15 @@ help() {
 	    -o		Org ID to register the VM with the Red Hat Customer Portal (requiers -a)
 	    -S		Set the system name during registration (default <actkey>-<vmname> | <username>-<vmname>)
 	    -U		Run "yum -y update" after registering the VM
+	    -v		Specify the OS Variant for the virt-install "--os-variant" option. See the "virt-install --osinfo list" command
+			for a list of accepted variants or "osinfo-query os" for even more output.
 	    version	RHEL Version for the new vm. I.e.: 9.3
 	                Will be used for libvirt's "--os-variant' option but also for the base image to clone from if -n is not specified
 	    name	Name of the new VM
 
 
 	Connect options:
-	$ME connect {ssh_option} {ssh_connection_string}
+	$ME connect [ssh_option] ssh_connection_string
 
 	    Any valid ssh option can be specified here but at a minimum the hostname.
 	    If configured, it can utilize the libvirt-nss module to determina the VMs ip address from the dnsmasq DHCP leases.
@@ -237,7 +247,6 @@ createbase() {
 	local VERSION="$1"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
 	local MINOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\2/')"
-	local VARIANT="rhel${VERSION}"
 	if [ -n "$BASENAME" ]
 	then
 		VMNAME="$BASENAME"
@@ -262,7 +271,7 @@ createbase() {
 		--memory 4096 \
 		--vcpus 2 \
 		--location "/var/lib/libvirt/images/$ISO" \
-		--os-variant "$VARIANT" \
+		--os-variant "${VARIANT:-rhel${VERSION}}" \
 		--disk size=${DISKSIZE},bus=virtio,pool=default \
 		--network network=default \
 		--extra-arg "console=tty0 console=ttyS0,115200n8 net.ifnames=0 inst.ks=file:/$(/usr/bin/basename $TMPFILE)" \
@@ -292,7 +301,6 @@ clone() {
 	then
 		BASENAME="rhel${MAJOR}${MINOR}base"
 	fi
-	VARIANT="rhel${VERSION}"
 
 	# Read public key files to be added to cloud-init config
 	pubkey=""
@@ -428,7 +436,7 @@ clone() {
 		--vcpus "$VCPUS" \
 		--name "$VMNAME" \
 		--disk "/var/lib/libvirt/images/${VMNAME}.qcow2" \
-		--os-variant "$VARIANT" \
+		--os-variant "${VARIANT:-rhel${VERSION}}" \
 		--serial pty \
 		--graphics vnc \
 		--graphics spice \
@@ -454,7 +462,6 @@ clone() {
 }
 
 
-
 # Main
 
 # If exist, source ~/.vmm.conf with variables override
@@ -474,37 +481,26 @@ fi
 COMMAND="$1"
 shift
 
-while getopts "m:c:R:t:n:d:s:iru:p:a:o:S:U" option
+while getopts "c:d:im:n:R:ru:p:a:o:S:s:t:Uv:" option
 do
 	case "$option" in
-	m)
-		MEM="$(( $OPTARG * 1024 ))"
-		;;
 	c)
 		VCPUS="$OPTARG"
-		;;
-	R)
-		DISKRESIZE="$OPTARG"
-		;;
-	t)
-		KSTEMPLATE="$OPTARG"
-		if [ ! -f "$KSTEMPLATE" ]
-		then
-			echo "Kickstart template \"$KSTEMPLATE\" does not exist!"
-			exit 1
-		fi
-		;;
-	n)
-		BASENAME="$OPTARG"
 		;;
 	d)
 		DOMAIN="$OPTARG"
 		;;
-	s)
-		DISKSIZE="$OPTARG"
-		;;
 	i)
 		INSERTISO="true"
+		;;
+	m)
+		MEM="$(( $OPTARG * 1024 ))"
+		;;
+	n)
+		BASENAME="$OPTARG"
+		;;
+	R)
+		DISKRESIZE="$OPTARG"
 		;;
 	r)
 		SMREGISTER="true"
@@ -524,8 +520,23 @@ do
 	S)
 		SMSYSNAME="$OPTARG"
 		;;
+	s)
+		DISKSIZE="$OPTARG"
+		;;
+	t)
+		KSTEMPLATE="$OPTARG"
+		if [ ! -f "$KSTEMPLATE" ]
+		then
+			echo "Kickstart template \"$KSTEMPLATE\" does not exist!"
+			exit 1
+		fi
+		;;
 	U)
 		UPDATE="true"
+		;;
+	v)
+		VARIANT="$OPTARG"
+		;;
 	esac
 done
 shift $(( $OPTIND - 1 ))
