@@ -1,6 +1,19 @@
 #!/bin/bash
 set -eu
 
+
+# Enable early debugging
+DEBUG=""
+for i in $@
+do
+	if [ "$i" = "-D" ]
+	then
+		set -x
+		DEBUG=TRUE
+	fi
+done
+
+
 # Defaults, can be overridden by cmd line or store personal defaults in ~/.vmm.conf.
 # This can include a custom kickstart template using KS{7,8,9}TEMPLATE.
 MEM="4096"
@@ -117,12 +130,13 @@ rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 '
 
 help() {
+	[ -n "$INSERTISO" ] && set -x
 	ME=$(/usr/bin/basename $0)
 	/usr/bin/cat <<- EOF
-	$ME dumpks version
-	$ME createbase [-n baseimagename] [-s size] [-t template] [-v variant] version
-	$ME clone [-c vcpus] [-d domain] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
-	$ME connect [ssh_option] ssh_connection_string
+	$ME dumpks [-D] version
+	$ME createbase [-D] [-n baseimagename] [-s size] [-t template] [-v variant] version
+	$ME clone [-c vcpus] [-D] [-d domain] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
+	$ME connect [-D] [ssh_option] ssh_connection_string
 	
 
 	COMMANDS:
@@ -132,12 +146,16 @@ help() {
 	    connect | con	Connect to the new VM using the libvirt-nss nsswitch.conf module
 
 
+	General options for all commands:
+	    -D		Enable debug/verbose output (set -x)
+
+
 	Dump KS template options:
-	$ME dumpks version
+	$ME dumpks [-D] version
 
 
 	Create base options:
-	$ME createbase [-n baseimagename] [-s size] [-t template] [-v variant] version
+	$ME createbase [-D] [-n baseimagename] [-s size] [-t template] [-v variant] version
 
 
 	    -n		Specify the base image name (default "rhel{x.y}base")
@@ -150,7 +168,7 @@ help() {
 
 
 	Clone options
-	$ME clone [-c vcpus] [-d domain] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
+	$ME clone [-c vcpus] [-D] [-d domain] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
 
 	    -c		Number of vCPUs for the new clone VM (default 2 vCPUs)
 	    -d		Domain name to use in cloud-init for setting the FQDN in the cloned VM
@@ -175,7 +193,7 @@ help() {
 
 
 	Connect options:
-	$ME connect [ssh_option] ssh_connection_string
+	$ME connect [-D] [ssh_option] ssh_connection_string
 
 	    Any valid ssh option can be specified here but at a minimum the hostname.
 	    If configured, it can utilize the libvirt-nss module to determina the VMs ip address from the dnsmasq DHCP leases.
@@ -191,6 +209,7 @@ help() {
 
 # Raise sudo privileges and keep it "alive"
 raisepriv() {
+	[ -n "$INSERTISO" ] && set -x
 	# Define a tmp file for either kickstart of cloud-init user-data
 	TMPFILE=$(/usr/bin/mktemp)
 
@@ -207,6 +226,7 @@ raisepriv() {
 
 # Output the kickstart template for the given version
 dumpkstemplate() {
+	[ -n "$INSERTISO" ] && set -x
 	VERSION="$1"
 	MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
 	if [ -n "$KSTEMPLATE" ]
@@ -219,6 +239,7 @@ dumpkstemplate() {
 
 # Set the ISO file which is specific per version
 setisoname() {
+	[ -n "$INSERTISO" ] && set -x
 	local MAJOR="$1"
 	local MINOR="$2"
 	case "$MAJOR.$MINOR" in
@@ -243,6 +264,7 @@ setisoname() {
 
 # Kickstart a base image
 createbase() {
+	[ -n "$INSERTISO" ] && set -x
 	# Defaults
 	local VERSION="$1"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
@@ -293,6 +315,7 @@ createbase() {
 
 # Clone a base image to a VM
 clone() {
+	[ -n "$INSERTISO" ] && set -x
 	local VERSION="$1"
 	local VMNAME="$2"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
@@ -481,11 +504,14 @@ fi
 COMMAND="$1"
 shift
 
-while getopts "c:d:im:n:R:ru:p:a:o:S:s:t:Uv:" option
+while getopts "c:Dd:im:n:R:ru:p:a:o:S:s:t:Uv:" option
 do
 	case "$option" in
 	c)
 		VCPUS="$OPTARG"
+		;;
+	D)
+		DEBUG="true"
 		;;
 	d)
 		DOMAIN="$OPTARG"
