@@ -9,7 +9,7 @@ do
 	if [ "$i" = "-D" ]
 	then
 		set -x
-		DEBUG=TRUE
+		DEBUG="true"
 	fi
 done
 
@@ -130,7 +130,7 @@ rpmkeys --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 '
 
 help() {
-	[ -n "$INSERTISO" ] && set -x
+	[ -n "$DEBUG" ] && set -x
 	ME=$(/usr/bin/basename $0)
 	/usr/bin/cat <<- EOF
 	$ME dumpks [-D] version
@@ -209,7 +209,7 @@ help() {
 
 # Raise sudo privileges and keep it "alive"
 raisepriv() {
-	[ -n "$INSERTISO" ] && set -x
+	[ -n "$DEBUG" ] && set -x
 	# Define a tmp file for either kickstart of cloud-init user-data
 	TMPFILE=$(/usr/bin/mktemp)
 
@@ -226,7 +226,7 @@ raisepriv() {
 
 # Output the kickstart template for the given version
 dumpkstemplate() {
-	[ -n "$INSERTISO" ] && set -x
+	[ -n "$DEBUG" ] && set -x
 	VERSION="$1"
 	MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
 	if [ -n "$KSTEMPLATE" ]
@@ -239,7 +239,7 @@ dumpkstemplate() {
 
 # Set the ISO file which is specific per version
 setisoname() {
-	[ -n "$INSERTISO" ] && set -x
+	[ -n "$DEBUG" ] && set -x
 	local MAJOR="$1"
 	local MINOR="$2"
 	case "$MAJOR.$MINOR" in
@@ -264,7 +264,7 @@ setisoname() {
 
 # Kickstart a base image
 createbase() {
-	[ -n "$INSERTISO" ] && set -x
+	[ -n "$DEBUG" ] && set -x
 	# Defaults
 	local VERSION="$1"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
@@ -315,7 +315,7 @@ createbase() {
 
 # Clone a base image to a VM
 clone() {
-	[ -n "$INSERTISO" ] && set -x
+	[ -n "$DEBUG" ] && set -x
 	local VERSION="$1"
 	local VMNAME="$2"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
