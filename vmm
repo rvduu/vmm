@@ -303,7 +303,7 @@ setisoname() {
 		9.1)
 			ISO="rhel-baseos-9.1-x86_64-dvd.iso"
 			;;
-		8|9|10*)
+		8*|9*|10*)
 			ISO="rhel-${MAJOR}.${MINOR}-x86_64-dvd.iso"
 			;;
 		*)
