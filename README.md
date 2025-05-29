@@ -8,7 +8,7 @@ This script is based and tested on a Fedora host (other distro may also work) an
 1. sudo access to run virsh / virt-install / virt-sysprep / qemu-img / mv / cp
 1. A Working `libvirt` + `qemu-kvm` setup and some additional packages
 
-        $ sudo dnf install libvirt guestfs-tools, libvirt-nss
+        $ sudo dnf install libvirt guestfs-tools libvirt-nss
 
 1. Enabled `libvirt` NSS module to allow connecting to VMs using the hostname or libivirt domain name
     1. Check current `authselect` profile and the enabled features (see also `/etc/authselect/authselect.conf`)
