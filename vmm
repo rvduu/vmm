@@ -317,6 +317,8 @@ setisoname() {
 # Kickstart a base image
 createbase() {
 	[ -n "$DEBUG" ] && set -x
+	[ -z "${1:-}" ] && { echo "No version for RHEL base image specified!"; exit 1; }
+
 	# Defaults
 	local VERSION="$1"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
@@ -368,6 +370,10 @@ createbase() {
 # Clone a base image to a VM
 clone() {
 	[ -n "$DEBUG" ] && set -x
+	[ -z "${1:-}" ] && { echo "No version for the new RHEL VM specified!"; exit 1; }
+	[ -z "${2:-}" ] && { echo "No name for the new RHEL VM specified!"; exit 1; }
+
+	# Defaults
 	local VERSION="$1"
 	local VMNAME="$2"
 	local MAJOR="$(echo $VERSION | sed -e 's/\([0-9]*\)\.\([0-9]*\)/\1/')"
