@@ -333,6 +333,9 @@ createbase() {
 	# Set the ISO file which is specific per version
 	setisoname "$MAJOR" "$MINOR"
 
+	# Raise privileges for the sudo commands
+	raisepriv
+
 	# Create temporary kickstart file from template
 	dumpkstemplate "$VERSION" | 
 		sed -e "s/__HOSTNAME__/$VMNAME/" > "$TMPFILE"
@@ -458,6 +461,9 @@ clone() {
 			RUNCMD="$RUNCMD\n  - yum -y upgrade"
 		fi
 	fi
+
+	# Raise privileges for the sudo commands
+	raisepriv
 
 	# Check if requested base image exists
 	/usr/bin/sudo /usr/bin/stat "/var/lib/libvirt/images/${BASENAME}.qcow2" >/dev/null
@@ -638,7 +644,6 @@ dumpks|dk)
 	dumpkstemplate "$@"
 	;;
 createbase|cb)
-	raisepriv
 	createbase "$@"
 	;;
 clone)
@@ -648,7 +653,6 @@ clone)
 		echo "Red Hat Customer Portal are mutually exclusive. Do not use both!"
 		exit 1
 	fi
-	raisepriv
 	clone "$@"
 	;;
 connect|con)
