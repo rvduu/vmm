@@ -26,6 +26,7 @@ SSHPARAM="-l admin"
 DISKSIZE="10"
 DISKRESIZE=""
 INSERTISO=""
+LIBVIRTNET="network=default"
 SMREGISTER=""
 SMUSERNAME=""
 SMPASSWORD=""
@@ -168,7 +169,7 @@ help() {
 	/usr/bin/cat <<- EOF
 	$ME dumpks [-D] version
 	$ME createbase [-D] [-I ISOfilename] [-n baseimagename] [-s size] [-t template] [-v variant] version
-	$ME clone [-c vcpus] [-D] [-d domain] [-I ISOfilename] [-i] [-m mem] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
+	$ME clone [-c vcpus] [-D] [-d domain] [-I ISOfilename] [-i] [-m mem] [-N network] [-n baseimagename] [-R [+]disksize] [-r -u user -p passwd | -a actkey -o orgid ] [-S systemname] [-v variant] [-U] version name
 	$ME connect [-D] [ssh_option] ssh_connection_string
 	
 
@@ -211,6 +212,8 @@ help() {
 	    		It defaults to the standard RHEL ISO but can be overriden for specials. I.e. RHEL Beta releases.
 	    -i		Insert the RHEL Installation ISO as a CDROM and configure /etc/yum.repos.d (mutually exclusieve with -r)
 	    -m		Memory for the new clone in Gb (default 4Gb)
+	    -N		Specify the libvirt network to attatch to the VM (default "network=default"). I.e. "bridge=br0"
+	    		Using a non default network usually also requires to set the DNS domain name with the -d parameter.
 	    -n		Specify the base image name to clone from (default "rhel{x.y}base")
 	    -R		Specify if the cloned disk needs to be resized. This parameter is passed directly
 	    		to qemu-img (see man 1 qemu-img). The cloud-init will take care of resizing the partition
@@ -532,7 +535,7 @@ clone() {
 		--import \
 		--noreboot \
 		--cloud-init "user-data=$TMPFILE" \
-		--network network=default \
+		--network "$LIBVIRTNET" \
 		--noautoconsole \
 		--wait -1 2>&1
 
@@ -570,7 +573,7 @@ fi
 COMMAND="$1"
 shift
 
-while getopts "c:Dd:I:im:n:R:ru:p:a:o:S:s:t:Uv:" option
+while getopts "c:Dd:I:im:n:N:R:ru:p:a:o:S:s:t:Uv:" option
 do
 	case "$option" in
 	c)
@@ -590,6 +593,9 @@ do
 		;;
 	m)
 		MEM="$(( $OPTARG * 1024 ))"
+		;;
+	N)
+		LIBVIRTNET="$OPTARG"
 		;;
 	n)
 		BASENAME="$OPTARG"
